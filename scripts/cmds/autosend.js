@@ -1,215 +1,97 @@
-const axios = require("axios");
-const moment = require("moment-timezone");
-
-// Quran Pak ki Selected Aayats aur Urdu Tarjuma List
-const quranList = [
-  {
-    surah: "سورة البقرة (آية 255 - آية الكرسي)",
-    arabic: "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ",
-    urdu: "اللہ! اس کے سوا کوئی معبود نہیں، وہ زندہ ہے، سب کا تھامنے والا ہے۔ اسے نہ اونگھ آتی ہے نہ نیند۔"
-  },
-  {
-    surah: "سورة الفاتحة (آية 1-7)",
-    arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ۝ الرَّحْمَٰنِ الرَّحِيمِ ۝ مَالِكِ يَوْمِ الدِّينِ ۝ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ۝ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
-    urdu: "سب تعریفیں اللہ ہی کے لیے ہیں جو تمام جہانوں کا پروردگار ہے۔ بہت مہربان، نہایت رحم کرنے والا۔ ہم صرف تیری ہی عبادت کرتے ہیں اور تجھ ہی سے مدد مانگتے ہیں۔ ہمیں سیدھا راستہ دکھا۔"
-  },
-  {
-    surah: "سورة الإخلاص (آية 1-4)",
-    arabic: "قُلْ هُوَ اللَّهُ أَحَدٌ ۝ اللَّهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",
-    urdu: "آپ کہہ دیجیے کہ وہ اللہ ایک ہے۔ اللہ بے نیاز ہے۔ نہ اس کی کوئی اولاد ہے اور نہ وہ کسی کی اولاد ہے۔ اور نہ کوئی اس کا ہمسر ہے۔"
-  },
-  {
-    surah: "سورة الشرح (آية 5-6)",
-    arabic: "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا ۝ إِنَّ مَعَ الْعُسْرِ يُسْرًا",
-    urdu: "پس یقیناً مشکل کے ساتھ آسانی ہے۔ بے شک مشکل کے ساتھ آسانی ہے۔"
-  },
-  {
-    surah: "سورة الرحمن (آية 13)",
-    arabic: "فَبِأَيِّ آلَاءِ رَبِّكُمَا تُكَذِّبَانِ",
-    urdu: "پس تم اپنے پروردگار کی کون کون سی نعمتوں کو جھٹلاؤ گے۔"
-  },
-  {
-    surah: "سورة يس (آية 82)",
-    arabic: "إِنَّمَا أَمْرُهُ إِذَا أَرَادَ شَيْئًا أَن يَقُولَ لَهُ كُن فَيَكُونُ",
-    urdu: "اس کا حکم تو بس یہ ہے کہ جب وہ کسی چیز کا ارادہ کرتا ہے تو فرماتا ہے کہ 'ہو جا' اور وہ ہو جاتی ہے۔"
-  },
-  {
-    surah: "سورة آل عمران (آية 139)",
-    arabic: "وَلَا تَهِنُوا وَلَا تَحْزَنُوا وَأَنتُمُ الْأَعْلَوْنَ إِن كُنتُم مُّؤْمِنِينَ",
-    urdu: "اور نہ تم دل چھوٹا کرو اور نہ غمگین ہو، تم ہی غالب رہو گے اگر تم مومن ہو۔"
-  },
-  {
-    surah: "سورة الطلاق (آية 2-3)",
-    arabic: "وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا ۝ وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ ۚ وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ",
-    urdu: "اور جو اللہ سے ڈرتا ہے اللہ اس کے لیے راستے نکال دیتا ہے، اور اسے ایسی جگہ سے رزق دیتا ہے جہاں کا اسے گمان بھی نہیں ہوتا۔ اور جو اللہ پر بھروسہ کرتا ہے وہ اس کے لیے کافی ہے۔"
-  },
-  {
-    surah: "سورة البقرة (آية 286)",
-    arabic: "لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا",
-    urdu: "اللہ کسی بھی جان پر اس کی طاقت سے زیادہ بوجھ نہیں ڈالتا۔"
-  },
-  {
-    surah: "سورة الضحى (آية 7)",
-    arabic: "وَوَجَدَكَ ضَالًّا فَهَدَىٰ",
-    urdu: "اور اس نے آپ کو راستہ سے ناواقف پایا تو سیدھا راستہ دکھا دیا۔"
-  },
-  {
-    surah: "سورة الفلق (آية 1-5)",
-    arabic: "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۝ مِن شَرِّ مَا خَلَقَ ۝ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ",
-    urdu: "آپ کہہ دیجیے کہ میں صبح کے رب کی پناہ مانگتا ہوں، ہر اس چیز کے شر سے جو اس نے پیدا کی، اور اندھیری رات کے شر سے جب وہ چھا جائے۔"
-  },
-  {
-    surah: "سورة الناس (آية 1-3)",
-    arabic: "قُلْ أَعُوذُ بِرَبِّ النَّاسِ ۝ مَلِكِ النَّاسِ ۝ إِلَٰهِ النَّاسِ",
-    urdu: "آپ کہہ دیجیے کہ میں لوگوں کے پروردگار کی پناہ میں آتا ہوں، جو لوگوں کا بادشاہ ہے، لوگوں کا معبود ہے۔"
-  },
-  {
-    surah: "سورة الزمر (آية 53)",
-    arabic: "قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَىٰ أَنفُسِهِمْ لَا تَقْنَطُوا مِن رَّحْمَةِ اللَّهِ ۚ إِنَّ اللَّهَ يَغْفِرُ الذُّنُوبَ جَمِيعًا",
-    urdu: "کہہ دیجیے کہ اے میرے بندو جنہوں نے اپنی جانوں پر زیادتی کی ہے، اللہ کی رحمت سے مایوس نہ ہو! یقیناً اللہ تمام گناہوں کو بخش دیتا ہے۔"
-  },
-  {
-    surah: "سورة الرعد (آية 28)",
-    arabic: "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
-    urdu: "خبردار! اللہ کے ذکر سے ہی دلوں کو اطمینان حاصل ہوتا ہے۔"
-  },
-  {
-    surah: "سورة غافر (آية 60)",
-    arabic: "وَقَالَ رَبُّكُمُ ادْعُونِي أَسْتَجِبْ لَكُمْ",
-    urdu: "اور تمہارے رب نے فرمایا: تم مجھ سے دعا کرو، میں تمہاری دعا قبول کروں گا۔"
-  },
-  {
-    surah: "سورة البقرة (آية 152)",
-    arabic: "فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ",
-    urdu: "پس تم مجھے یاد رکھو، میں تمہیں یاد رکھوں گا، اور میرا شکر ادا کرو اور میری ناشکری نہ کرو۔"
-  },
-  {
-    surah: "سورة البقرة (آية 153)",
-    arabic: "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",
-    urdu: "اے ایمان والو! صبر اور نماز کے ذریعے مدد چاہو، بے شک اللہ صبر کرنے والوں کے ساتھ ہے۔"
-  },
-  {
-    surah: "سورة النحل (آية 128)",
-    arabic: "إِنَّ اللَّهَ مَعَ الَّذِينَ اتَّقَوا وَّالَّذِينَ هُم مُّحْسِنُونَ",
-    urdu: "بے شک اللہ ان لوگوں کے ساتھ ہے جو پرہیزگار ہیں اور جو احسان کرنے والے ہیں۔"
-  },
-  {
-    surah: "سورة الحشر (آية 22)",
-    arabic: "هُوَ اللَّهُ الَّذِي لَا إِلَٰهَ إِلَّا هُوَ ۖ عَالِمُ الْغَيْبِ وَالشَّهَادَةِ ۖ هُوَ الرَّحْمَٰنُ الرَّحِيمُ",
-    urdu: "وہی اللہ ہے جس کے سوا کوئی معبود نہیں، چھپی اور کھلی چیزوں کا جاننے والا ہے، وہی نہایت مہربان اور رحم کرنے والا ہے۔"
-  },
-  {
-    surah: "سورة طه (آية 114)",
-    arabic: "وَقُل رَّبِّ زِدْنِي عِلْمًا",
-    urdu: "اور دعا کرو کہ اے میرے رب! میرے علم میں اضافہ فرما۔"
-  },
-  {
-    surah: "سورة الأنبياء (آية 87)",
-    arabic: "لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ",
-    urdu: "تیرے سوا کوئی معبود نہیں، تو پاک ہے، بے شک میں ہی ظالموں میں سے تھا۔"
-  },
-  {
-    surah: "سورة الملك (آية 1)",
-    arabic: "تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
-    urdu: "بہت بابرکت ہے وہ ذات جس کے ہاتھ میں تمام بادشاہی ہے اور وہ ہر چیز پر قادر ہے۔"
-  },
-  {
-    surah: "سورة الفرقان (آية 74)",
-    arabic: "رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا",
-    urdu: "اے ہمارے پروردگار! ہمیں ہماری بیویوں اور اولاد کی طرف سے آنکھوں کی ٹھنڈک عطا فرما اور ہمیں پرہیزگاروں کا پیشوا بنا۔"
-  },
-  {
-    surah: "سورة آل عمران (آية 173)",
-    arabic: "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ",
-    urdu: "ہمیں اللہ ہی کافی ہے اور وہ بہترین کارساز ہے۔"
-  },
-  {
-    surah: "سورة الضحى (آية 5)",
-    arabic: "وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ",
-    urdu: "اور عنقریب تمہارا رب تمہیں اتنا دے گا کہ تم خوش ہو جاؤ گے۔"
-  }
-];
+let lastSentHour = -1;
 
 module.exports = {
   config: {
-    name: "autosend",
-    version: "3.0.0",
-    author: "TAHA KHAN",
-    countDown: 5,
+    name: "autosent",
+    aliases: ["autopoetry"],
+    version: "10.05",
+    author: "SHAAN-KHAN & TAHA KHAN",
+    countDown: 0,
     role: 0,
     description: {
-      en: "Auto sends Quran Ayah with Urdu translation every hour",
-      ur: "Har ghante Quran Pak ki ayat urdu tarjuma ke sath auto send karta hai"
+      en: "Fully automatic 24/7 hourly poetry background process",
+      ur: "Bina kisi command ke khud-ba-khud 24 ghante background mein chalne wala script"
     },
-    category: "auto"
+    category: "system",
+    guide: {
+      en: "{pn}",
+      ur: "{pn}"
+    }
   },
 
-  onLoad: async function ({ api }) {
-    // Har 1 ghante (3,600,000 ms) baad auto send hoga
+  // Bot start hote hi khud-ba-khud background timer run hoga
+  onLoad({ api }) {
+    const poetryList = [
+      { timeDisplay: "12:00 AM", text: "کیا میں نے کبھی سوچا تھا کہ خوابوں کا پیچھا کرتے ہوئے میں خود کو کھو دوں گا؟\nمگر یہ کیا، جب میں نے خود کو پایا تو سارے خواب کہیں کھو گئے۔" },
+      { timeDisplay: "01:00 AM", text: "دلوں میں تنہائی ہے،\nپھر بھی امیدیں ہمیشہ دل کو زندہ رکھتی ہیں۔\nجو سیدھی راہ پر چلے گا وہ ضرور کچھ روشنی پائے گا۔" },
+      { timeDisplay: "02:00 AM", text: "جب ہم گرتے ہیں تو دنیا کی نظروں میں ہماری قدر بڑھ جاتی ہے،\nکیونکہ یہ ہمیں دوبارہ کھڑے ہونے کی طاقت دیتا ہے۔" },
+      { timeDisplay: "03:00 AM", text: "ہم جو چاہتے ہیں وہ آسانی سے نہیں ملتا\nلیکن جب ہم محنت اور صبر حاصل کرتے ہیں تو یہ سب سے قیمتی ہوتا ہے۔" },
+      { timeDisplay: "04:00 AM", text: "تنہائی میں خود کو کبھی تنہا مت سمجھو\nکیونکہ دنیا کا سب سے بڑا دوست آپ کا خود اعتمادی ہے۔" },
+      { timeDisplay: "05:00 AM", text: "ہر شخص کے دل میں ایک کہانی ہے جسے کبھی کوئی نہیں جانتا،\nکیونکہ وہ کہانی صرف اس شخص کے دل میں رہتی ہے۔" },
+      { timeDisplay: "06:00 AM", text: "ہر موڑ پر نیا رستہ ڈھونڈتا ہوں\nکیونکہ میں ان راستوں پر نہیں چلتا جو پہلے سے طے شدہ ہوں۔" },
+      { timeDisplay: "07:00 AM", text: "خوش رہنا اور مسکرانا سب سے بڑی طاقت ہے\nکیونکہ یہ درد کو کم کرتا ہے اور زندگی کو آسان بناتا ہے۔ 🕊️" },
+      { timeDisplay: "08:00 AM", text: "زندگی میں مشکلیں آتی ہیں، لیکن اگر ہم ان کے ساتھ ہنستے ہوئے چلیں تو وہ ہمیں کبھی ہارنے نہیں دیتے۔" },
+      { timeDisplay: "09:00 AM", text: "اچھے برے وقت کا ملنا کسی کے بس میں نہیں ہوتا\nلیکن جو اسے قبول کرتا ہے وہی حقیقی فاتح ہے۔" },
+      { timeDisplay: "10:00 AM", text: "زندگی کی سب سے اچھی بات یہ ہے کہ وقت جو بھی گزر جائے\nوہ کبھی واپس نہیں آتا، اس لیے جتنا ہو سکے جیو۔" },
+      { timeDisplay: "11:00 AM", text: "لوگ اکثر مجھے خوش رہنے کو کہتے ہیں،\nلیکن ان کی سمجھ میں نہیں آتا کہ مسکراہٹ کے پیچھے کتنی کہانیاں چھپی ہیں۔" },
+      { timeDisplay: "12:00 PM", text: "ہمیں چھوڑنے والے، ہم ان کے بغیر بھی جی سکتے ہیں\nلیکن جو دل سے جڑے رہتے ہیں وہ کبھی نہیں جاتے۔" },
+      { timeDisplay: "01:00 PM", text: "کبھی کبھی ہماری خاموشی ہماری سب سے بڑی آواز بن جاتی ہے\nکیونکہ اس آواز میں سچائی اور درد ہے۔" },
+      { timeDisplay: "02:00 PM", text: "زندگی کی راہیں آسان نہیں، ہر کسی کا دل کبھی نہ کبھی ٹوٹتا ہے\nلیکن جو دل ٹوٹا اور جڑا ہو وہ سب سے مضبوط ہوتا ہے۔" },
+      { timeDisplay: "03:00 PM", text: "امید کے بارے میں کیا، یہ ہر روز ٹوٹتا ہے اور پھر سے بڑھتا ہے۔\nبس اسے پکڑو یہاں تک کہ جب وہ گرے، کیونکہ یہ تمہاری طاقت ہے۔" },
+      { timeDisplay: "04:00 PM", text: "انسان اپنے حالات کا پابند نہیں ہوتا، آپ کا عزم آپ کی نیت سے بڑا ہے۔\nجو کبھی ہار نہیں مانتا وہی سب سے زیادہ جیتتا ہے۔" },
+      { timeDisplay: "05:00 PM", text: "جو اپنے خواب پورے دل سے جیتا ہے وہ اپنی زندگی میں کبھی ہار نہیں سکتا۔\nشکست صرف وہی لوگ قبول کرتے ہیں جو اپنی امیدیں چھوڑ دیتے ہیں۔" },
+      { timeDisplay: "06:00 PM", text: "زندگی بہت مختصر ہے،\nلیکن بعض اوقات ہم اپنے خوابوں کو پورا کرنے میں اتنی دیر لگا دیتے ہیں کہ ہم جینے کا صحیح طریقہ بھول جاتے ہیں۔" },
+      { timeDisplay: "07:00 PM", text: "ہمیشہ یاد رکھنا، دکھ اور خوشی دونوں وقت کی طرح ہیں۔\nجب ایک آتا ہے تو دوسرا بھی جلد آتا ہے، اس لیے کبھی تنہا محسوس نہ کریں۔" },
+      { timeDisplay: "08:00 PM", text: "جو گزر گیا اسے بھول جاؤ، ابھی کیا ہے اس پر توجہ دیں۔\nآج آپ کی محنت، آپ کے کل کا چہرہ بنائے گی۔" },
+      { timeDisplay: "09:00 PM", text: "انسان خود کو اسی دن سمجھتا ہے جس دن وہ دوسروں کے بارے میں سوچنا چھوڑ دیتا ہے۔\nکیونکہ دوسروں کے بارے میں سوچتے ہوئے ہم اپنے آپ کو کھو دیتے ہیں۔ 🕊️" },
+      { timeDisplay: "10:00 PM", text: "زندگی کی سب سے بڑی سزا کسی کو دل سے پیار کرنے کے بعد اسے کھونا پڑتا ہے۔\nلیکن یہ وہ وقت ہوتا ہے جب انسان سب سے مضبوط ہوتا ہے۔" },
+      { timeDisplay: "11:00 PM", text: "زندگی میں ہمیشہ خوش رہنے کی کوشش کرو\nکیونکہ جب آپ خوش ہوتے ہیں تو دنیا آپ کے ساتھ ہوتی ہے\nاور جب آپ اداس ہوتے ہیں تو دنیا بھی چلی جاتی ہے۔" }
+    ];
+
     setInterval(async () => {
       try {
-        let surahName = "";
-        let arabicText = "";
-        let urduText = "";
+        if (!api || typeof api.getThreadList !== "function") return;
 
-        // 1. Online API se fetch karna (Tamam 6,236 Aayats ke liye)
-        try {
-          const randomAyah = Math.floor(Math.random() * 6236) + 1;
-          const res = await axios.get(
-            `https://api.alquran.cloud/v1/ayah/${randomAyah}/editions/quran-uthmani,ur.junagarhi`,
-            { timeout: 8000 }
-          );
+        const nowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Karachi" });
+        const now = new Date(nowStr);
 
-          if (res.data && res.data.code === 200) {
-            const arabicData = res.data.data[0];
-            const urduData = res.data.data[1];
-            surahName = `${arabicData.surah.name} (${arabicData.surah.englishName} - Ayah ${arabicData.numberInSurah})`;
-            arabicText = arabicData.text;
-            urduText = urduData.text;
-          }
-        } catch (e) {
-          // 2. Offline Fallback: Agar API issue ho to Built-in List se lena
-          const randomLocal = quranList[Math.floor(Math.random() * quranList.length)];
-          surahName = randomLocal.surah;
-          arabicText = randomLocal.arabic;
-          urduText = randomLocal.urdu;
-        }
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
 
-        // Time Format
-        const currentTime = moment().tz("Asia/Karachi").format("hh:mm A | DD-MM-YYYY");
+        // Har naye ghante ke exact 00 minute par auto message send hoga
+        if (currentMinute === 0 && lastSentHour !== currentHour) {
+          lastSentHour = currentHour;
+          const matched = poetryList[currentHour];
 
-        // Message Layout
-        const messageBody = 
-`╭━━━〔 🕌 𝐐𝐔𝐑𝐀𝐍 𝐀𝐘𝐀𝐓 〕━━━╮
-│ ⏰ 𝐓𝐢𝐦𝐞: ${currentTime}
-├━━━━━━━━━━━━━━━━━━━━━━━┤
-│ 📖 𝐒𝐮𝐫𝐚𝐡: ${surahName}
-│
-│ 🕌 ${arabicText}
-│
-│ 📜 𝐔𝐫𝐝𝐮 𝐓𝐚𝐫𝐣𝐮𝐦𝐚:
-│ ${urduText}
-├━━━━━━━━━━━━━━━━━━━━━━━┤
-│  »» 𝐎𝐖𝐍𝐄𝐑: 𝐓𝐀𝐇𝐀 𝐊𝐇𝐀𝐍 ««
+          const formattedMessage = 
+`╭━━━•✨ 𝑺𝑼𝑵𝑬𝑯𝑹𝑰 𝑨𝑳𝑭𝑨𝑨𝒁 ✨•━━━╮
+
+⏳ 𝐀𝐛𝐡𝐢 𝐓𝐢𝐦𝐞 𝐇𝐚𝐢: ${matched.timeDisplay}
+
+${matched.text}
+
+👑 𝐎𝐖𝐍𝐄𝐑 »» 𝐓𝐀𝐇𝐀 𝐊𝐇𝐀𝐍 ««
 ╰━━━━━━━━━━━━━━━━━━━━━━━╯`;
 
-        // Tamam Active Groups mein bhejny ke liye
-        api.getThreadList(100, null, ["INBOX"], (err, list) => {
-          if (err) return;
-          for (const item of list) {
-            if (item.isGroup && item.isSubscribed) {
-              api.sendMessage(messageBody, item.threadID);
-            }
-          }
-        });
+          api.getThreadList(100, null, ["INBOX"], (err, list) => {
+            if (err || !list) return;
+            const groupThreads = list.filter(t => t.isGroup && t.isSubscribed);
 
-      } catch (error) {
-        console.error("[autosend] Error sending Quran Ayah:", error.message);
+            for (const thread of groupThreads) {
+              api.sendMessage(formattedMessage, thread.threadID, (e) => {
+                if (e) console.error(`[Autosent Fail] Thread: ${thread.threadID}`);
+              });
+            }
+          });
+        }
+      } catch (e) {
+        console.error("[Autosent Error]:", e.message);
       }
-    }, 60 * 60 * 1000); // 1 Hour interval
+    }, 10000);
   },
 
-  onStart: async function ({ api, event }) {
-    return api.sendMessage("🕌 Quran Autosend active hai! Har 1 ghante baad Quran Pak ki Aayat auto-send hoti rahegi.", event.threadID, event.messageID);
+  async onStart({ api, event }) {
+    return api.sendMessage("🤖 Autosent system 100% automatic hai. Isay alag se chalu karne ki zaroorat nahi, ye background mein chal raha hai.", event.threadID, event.messageID);
   }
 };
+                           
