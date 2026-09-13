@@ -14,9 +14,9 @@ module.exports = {
   },
 
   onStart: async function ({ message, args, api, event }) {
-    const permission = ["100075454605535", "61577714644176"];
+    const permission = ["100075933317520", "61576355017916"];
     if (!permission.includes(event.senderID)) {
-      return api.sendMessage("Guu kha tor file neoar kono permission nai 🙂🐸", event.threadID, event.messageID);
+      return api.sendMessage("SRF ADNIN KO ALLOW HA 🙂🐸", event.threadID, event.messageID);
     }
 
     const fileName = args[0];
