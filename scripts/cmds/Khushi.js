@@ -14,7 +14,7 @@ module.exports = {
     countDown: 2,
     role: 0,
     description: {
-      en: "Dewani — Auto replies to users when replying to bot messages (No Self Loop)",
+      en: "Dewani — Auto replies to users when replying to bot messages (No Double Reply)",
       ur: "Dewani — Bot k message par sirf doosro k reply par answer kare gi"
     },
     category: "ai",
@@ -26,10 +26,10 @@ module.exports = {
 
   chatMemory: {},
 
-  AUDIO_API: "https://uzairrajputapis.qzz.io/api/downloader/ytmp3",
-  VIDEO_API: "https://uzairrajputapis.qzz.io/api/downloader/youtube",
-  YT_SEARCH: "https://xalman-apis.vercel.app/api/ytsearch?q=",
-  AI_API: "https://uzairrajputapis.qzz.io/api/ai/gemini",
+  AUDIO_API: "https://qzz.io",
+  VIDEO_API: "https://qzz.io",
+  YT_SEARCH: "https://vercel.app",
+  AI_API: "https://qzz.io",
   MAX_FILE_SIZE: 25 * 1024 * 1024,
   OWNER_TAG: "»»𝐎𝐖𝐍𝐄𝐑««★™  »»𝐓𝐀𝐇𝐀 𝐊𝐇𝐀𝐍««",
   TRIGGER_WORDS: ["khushi", "dewani", "khush"],
@@ -228,67 +228,54 @@ Dewani:`;
 
   // ===== MAIN PROCESSOR =====
   async processMessage(api, event, text) {
-    let cleanedMsg = text.replace(/^khushi[\s,!.?:-]*/i, "").trim();
-    if (!cleanedMsg) return this.sendMsg(api, "Bolo na jaanu, kya chahiye? 😘", event.threadID, event.messageID, event.senderID);
+    let cleanedMsg = text.replace(/^(khushi|dewani|khush) occupational[\s,!.?:-]*/i, "").replace(/^(khushi|dewani|khush)[\s,!.?:-]*/i, "").trim();
+    
+    if (!cleanedMsg) {
+      return this.sendMsg(api, "Ji jaanu, boliye kya baat hai? ❤️🤗", event.threadID, event.messageID, event.senderID);
+    }
 
-    const isVideoReq = /\b(video|vdo|mp4)\b/i.test(cleanedMsg);
-    const isAudioReq = /\b(song|music|audio|mp3|play|gana|gaana)\b/i.test(cleanedMsg);
+    const lowerText = cleanedMsg.toLowerCase();
 
-    if (isVideoReq || isAudioReq || this.isYouTubeUrl(cleanedMsg)) {
-      let query = cleanedMsg.replace(/\b(video|vdo|mp4|song|music|audio|mp3|play|gana|gaana|khushi|dewani|khush)\b/gi, "").trim();
-      if (this.isYouTubeUrl(cleanedMsg)) query = cleanedMsg;
-
-      if (!query) return this.sendMsg(api, "Jaanu naam to batao kya download karun? 🥺", event.threadID, event.messageID, event.senderID);
-
-      if (isVideoReq) {
-        return this.downloadVideo(api, event, query);
-      } else {
-        return this.downloadAudio(api, event, query);
-      }
+    if (lowerText.startsWith("video ") || lowerText.startsWith("mp4 ")) {
+      const query = cleanedMsg.replace(/^(video|mp4)[\s]*/i, "").trim();
+      return this.downloadVideo(api, event, query);
+    } 
+    
+    if (lowerText.startsWith("audio ") || lowerText.startsWith("mp3 ") || lowerText.startsWith("song ")) {
+      const query = cleanedMsg.replace(/^(audio|mp3|song)[\s]*/i, "").trim();
+      return this.downloadAudio(api, event, query);
     }
 
     return this.handleAI(api, event, cleanedMsg);
   },
 
-  // ===== GOATBOT COMMAND HANDLERS =====
+  // ===== GOATBOT ENGINE EVENTS =====
   async onStart({ api, event, args }) {
-    const botID = api.getCurrentUserID();
-    if (String(event.senderID) === String(botID)) return;
-    return this.processMessage(api, event, args.join(" "));
+    const text = args.join(" ");
+    return this.processMessage(api, event, text);
   },
 
   async onChat({ api, event }) {
     if (!event.body) return;
-
-    const botID = api.getCurrentUserID();
     
-    // 🛑 BLOCK SELF-REPLY (Aapka bot ab khud ke msgs par trigger nahi hoga)
-    if (String(event.senderID) === String(botID)) return;
+    // [FIX] যদি মেসেজটি কোনো রিপ্লাই হয়, তবে onChat এক্সিকিউট হবে না (onReply হ্যান্ডেল করবে)
+    if (event.messageReply) return; 
 
     const body = event.body.trim();
+    const lowerBody = body.toLowerCase();
 
-    // Check if the user is replying to ANY message sent by the bot
-    const isReplyToBot = event.type === "message_reply" && 
-      (String(event.messageReply?.senderID) === String(botID) || String(event.messageReply?.author) === String(botID));
-
-    // Check trigger words
-    const containsTrigger = this.TRIGGER_WORDS.some(word => body.toLowerCase().includes(word.toLowerCase()));
-
-    if (isReplyToBot || containsTrigger) {
-      const prefix = global.GoatBot?.config?.prefix || ".";
-      if (body.startsWith(prefix)) return;
-
+    const isTriggered = this.TRIGGER_WORDS.some(t => lowerBody === t || lowerBody.startsWith(t + " "));
+    
+    if (isTriggered) {
       return this.processMessage(api, event, body);
     }
   },
 
-  async onReply({ api, event }) {
-    if (!event.body) return;
-    const botID = api.getCurrentUserID();
-    
-    // 🛑 BLOCK SELF-REPLY
-    if (String(event.senderID) === String(botID)) return;
+  async onReply({ api, event, Reply }) {
+    if (event.senderID === api.getCurrentUserID()) return;
 
-    return this.processMessage(api, event, event.body.trim());
+    if (Reply && Reply.commandName === this.config.name) {
+      return this.processMessage(api, event, event.body || "");
+    }
   }
 };
