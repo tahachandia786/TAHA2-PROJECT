@@ -9,12 +9,12 @@ module.exports = {
   config: {
     name: "khushi",
     aliases: ["dewani", "khush"],
-    version: "22.0.0",
+    version: "22.0.1",
     author: "TAHA KHAN",
     countDown: 2,
     role: 0,
     description: {
-      en: "Dewani — Auto replies to users when replying to bot messages (No Double Reply)",
+      en: "Dewani — Auto replies to users when replying to bot messages",
       ur: "Dewani — Bot k message par sirf doosro k reply par answer kare gi"
     },
     category: "ai",
@@ -25,16 +25,17 @@ module.exports = {
   },
 
   chatMemory: {},
+  processedMsgs: {},   // 👈 duplicate guard
 
-  AUDIO_API: "https://qzz.io",
-  VIDEO_API: "https://qzz.io",
-  YT_SEARCH: "https://vercel.app",
-  AI_API: "https://qzz.io",
+  AUDIO_API: "https://uzairrajputapis.qzz.io/api/downloader/ytmp3",
+  VIDEO_API: "https://uzairrajputapis.qzz.io/api/downloader/youtube",
+  YT_SEARCH: "https://xalman-apis.vercel.app/api/ytsearch?q=",
+  AI_API: "https://uzairrajputapis.qzz.io/api/ai/gemini",
   MAX_FILE_SIZE: 25 * 1024 * 1024,
   OWNER_TAG: "»»𝐎𝐖𝐍𝐄𝐑««★™  »»𝐓𝐀𝐇𝐀 𝐊𝐇𝐀𝐍««",
   TRIGGER_WORDS: ["khushi", "dewani", "khush"],
 
-  // Safe message sender function
+  // ===== SAFE SEND =====
   sendMsg(api, content, threadID, messageID, senderID) {
     return new Promise((resolve) => {
       api.sendMessage(content, threadID, (err, info) => {
@@ -51,11 +52,10 @@ module.exports = {
   },
 
   fileSizeGuard(maxBytes) {
-    let received = 0;
     return new Transform({
       transform(chunk, _, cb) {
-        received += chunk.length;
-        if (received > maxBytes) {
+        this.received = (this.received || 0) + chunk.length;
+        if (this.received > maxBytes) {
           const e = new Error("File too large");
           e.code = "TOO_LARGE";
           return cb(e);
@@ -73,7 +73,10 @@ module.exports = {
 
   async getYTInfo(query) {
     try {
-      const { data } = await axios.get(`${this.YT_SEARCH}${encodeURIComponent(query)}`, { timeout: 8000 });
+      const { data } = await axios.get(
+        `${this.YT_SEARCH}${encodeURIComponent(query)}`,
+        { timeout: 8000 }
+      );
       const video = data?.result?.[0] || data?.result?.items?.[0];
       if (video) return { url: video.url, title: video.title };
     } catch (e) {}
@@ -92,7 +95,7 @@ module.exports = {
     return /(youtube\.com|youtu\.be)/i.test(text);
   },
 
-  // ===== AUDIO DOWNLOADER =====
+  // ===== AUDIO =====
   async downloadAudio(api, event, query) {
     const { threadID, messageID, senderID } = event;
     const cacheDir = path.join(__dirname, "cache");
@@ -102,14 +105,19 @@ module.exports = {
     api.setMessageReaction("⌛", messageID, () => {}, true);
 
     try {
-      const info = this.isYouTubeUrl(query) ? { url: query, title: "Requested Media" } : await this.getYTInfo(query);
+      const info = this.isYouTubeUrl(query)
+        ? { url: query, title: "Requested Media" }
+        : await this.getYTInfo(query);
+
       if (!info || !info.url) {
         api.setMessageReaction("❌", messageID, () => {}, true);
         return this.sendMsg(api, "Maafi jaanu, ye audio nahi mili 🥺💔", threadID, messageID, senderID);
       }
 
       const { data } = await axios.post(this.AUDIO_API, { url: info.url }, { timeout: 30000 });
-      const downloadUrl = data?.result?.video || data?.result?.download_url || data?.result?.url || data?.download_url;
+      const downloadUrl =
+        data?.result?.video || data?.result?.download_url ||
+        data?.result?.url || data?.download_url;
 
       if (!downloadUrl) {
         api.setMessageReaction("❌", messageID, () => {}, true);
@@ -119,11 +127,7 @@ module.exports = {
       filePath = path.join(cacheDir, `khushi_${senderID}_${Date.now()}.mp3`);
       const res = await axios({ url: downloadUrl, method: "GET", responseType: "stream", timeout: 60000 });
 
-      await pipeline(
-        res.data,
-        this.fileSizeGuard(this.MAX_FILE_SIZE),
-        fs.createWriteStream(filePath)
-      );
+      await pipeline(res.data, this.fileSizeGuard(this.MAX_FILE_SIZE), fs.createWriteStream(filePath));
 
       api.setMessageReaction("✅", messageID, () => {}, true);
       await this.sendMsg(api, {
@@ -132,7 +136,6 @@ module.exports = {
       }, threadID, messageID, senderID);
 
       await this.removeFile(filePath);
-
     } catch (err) {
       api.setMessageReaction("❌", messageID, () => {}, true);
       await this.removeFile(filePath);
@@ -140,7 +143,7 @@ module.exports = {
     }
   },
 
-  // ===== VIDEO DOWNLOADER =====
+  // ===== VIDEO =====
   async downloadVideo(api, event, query) {
     const { threadID, messageID, senderID } = event;
     const cacheDir = path.join(__dirname, "cache");
@@ -150,14 +153,19 @@ module.exports = {
     api.setMessageReaction("⌛", messageID, () => {}, true);
 
     try {
-      const info = this.isYouTubeUrl(query) ? { url: query, title: "Requested Media" } : await this.getYTInfo(query);
+      const info = this.isYouTubeUrl(query)
+        ? { url: query, title: "Requested Media" }
+        : await this.getYTInfo(query);
+
       if (!info || !info.url) {
         api.setMessageReaction("❌", messageID, () => {}, true);
         return this.sendMsg(api, "Maafi jaanu, ye video nahi mili 🥺💔", threadID, messageID, senderID);
       }
 
       const { data } = await axios.post(this.VIDEO_API, { url: info.url }, { timeout: 30000 });
-      const downloadUrl = data?.result?.video || data?.result?.download_url || data?.result?.url || data?.download_url;
+      const downloadUrl =
+        data?.result?.video || data?.result?.download_url ||
+        data?.result?.url || data?.download_url;
 
       if (!downloadUrl) {
         api.setMessageReaction("❌", messageID, () => {}, true);
@@ -167,11 +175,7 @@ module.exports = {
       filePath = path.join(cacheDir, `khushi_${senderID}_${Date.now()}.mp4`);
       const res = await axios({ url: downloadUrl, method: "GET", responseType: "stream", timeout: 60000 });
 
-      await pipeline(
-        res.data,
-        this.fileSizeGuard(this.MAX_FILE_SIZE),
-        fs.createWriteStream(filePath)
-      );
+      await pipeline(res.data, this.fileSizeGuard(this.MAX_FILE_SIZE), fs.createWriteStream(filePath));
 
       api.setMessageReaction("✅", messageID, () => {}, true);
       await this.sendMsg(api, {
@@ -180,7 +184,6 @@ module.exports = {
       }, threadID, messageID, senderID);
 
       await this.removeFile(filePath);
-
     } catch (err) {
       api.setMessageReaction("❌", messageID, () => {}, true);
       await this.removeFile(filePath);
@@ -188,7 +191,7 @@ module.exports = {
     }
   },
 
-  // ===== AI CHAT LOGIC =====
+  // ===== AI CHAT =====
   async handleAI(api, event, cleanedMsg) {
     const { threadID, messageID, senderID } = event;
 
@@ -212,13 +215,9 @@ Dewani:`;
     try {
       const res = await axios.post(this.AI_API, { prompt }, { timeout: 20000 });
       let reply = res.data?.result?.answer || res.data?.answer || "Jaanu kuch bolo na... 🥺";
-
-      if (reply.length > 100) {
-        reply = reply.split('.')[0] + " 🫣";
-      }
+      if (reply.length > 100) reply = reply.split(".")[0] + " 🫣";
 
       this.chatMemory[threadID].push(`Dewani: ${reply}`);
-
       return this.sendMsg(api, reply, threadID, messageID, senderID);
     } catch (e) {
       console.error("[khushi AI Error]", e.message);
@@ -226,30 +225,35 @@ Dewani:`;
     }
   },
 
-  // ===== MAIN PROCESSOR =====
+  // ===== MAIN (with duplicate guard) =====
   async processMessage(api, event, text) {
-    let cleanedMsg = text.replace(/^(khushi|dewani|khush) occupational[\s,!.?:-]*/i, "").replace(/^(khushi|dewani|khush)[\s,!.?:-]*/i, "").trim();
-    
+    // 👇 Duplicate guard — একই messageID একবারই প্রসেস হবে
+    const key = event.messageID;
+    if (key) {
+      if (this.processedMsgs[key]) return;
+      this.processedMsgs[key] = true;
+      setTimeout(() => { delete this.processedMsgs[key]; }, 5000);
+    }
+
+    let cleanedMsg = text.replace(/^(khushi|dewani|khush)[\s,!.?:-]*/i, "").trim();
+
     if (!cleanedMsg) {
-      return this.sendMsg(api, "Ji jaanu, boliye kya baat hai? ❤️🤗", event.threadID, event.messageID, event.senderID);
+      return this.sendMsg(api, "Ji jaanu, boliye kya hua? ❤️🤗", event.threadID, event.messageID, event.senderID);
     }
 
     const lowerText = cleanedMsg.toLowerCase();
 
     if (lowerText.startsWith("video ") || lowerText.startsWith("mp4 ")) {
-      const query = cleanedMsg.replace(/^(video|mp4)[\s]*/i, "").trim();
-      return this.downloadVideo(api, event, query);
-    } 
-    
+      return this.downloadVideo(api, event, cleanedMsg.substring(6).trim());
+    }
     if (lowerText.startsWith("audio ") || lowerText.startsWith("mp3 ") || lowerText.startsWith("song ")) {
-      const query = cleanedMsg.replace(/^(audio|mp3|song)[\s]*/i, "").trim();
-      return this.downloadAudio(api, event, query);
+      return this.downloadAudio(api, event, cleanedMsg.substring(6).trim());
     }
 
     return this.handleAI(api, event, cleanedMsg);
   },
 
-  // ===== GOATBOT ENGINE EVENTS =====
+  // ===== LIFECYCLE =====
   async onStart({ api, event, args }) {
     const text = args.join(" ");
     return this.processMessage(api, event, text);
@@ -257,21 +261,24 @@ Dewani:`;
 
   async onChat({ api, event }) {
     if (!event.body) return;
-    
-    // [FIX] যদি মেসেজটি কোনো রিপ্লাই হয়, তবে onChat এক্সিকিউট হবে না (onReply হ্যান্ডেল করবে)
-    if (event.messageReply) return; 
-
     const body = event.body.trim();
     const lowerBody = body.toLowerCase();
 
-    const isTriggered = this.TRIGGER_WORDS.some(t => lowerBody === t || lowerBody.startsWith(t + " "));
-    
+    // 👇 prefix থাকলে onChat skip — onStart হ্যান্ডেল করবে
+    const prefix = global.GoatBot?.config?.prefix || "/";
+    if (body.startsWith(prefix)) return;
+
+    const isTriggered = this.TRIGGER_WORDS.some(
+      t => lowerBody === t || lowerBody.startsWith(t + " ")
+    );
+
     if (isTriggered) {
       return this.processMessage(api, event, body);
     }
   },
 
   async onReply({ api, event, Reply }) {
+    // 👇 bot নিজের reply-তে লুপ হবে না
     if (event.senderID === api.getCurrentUserID()) return;
 
     if (Reply && Reply.commandName === this.config.name) {
