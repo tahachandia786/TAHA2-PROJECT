@@ -1,4 +1,4 @@
-const utils = {
+*cmd install baby.js const utils = {
     realMention: (name, uid, message) => { 
         const finalMessage = `『 ${name} 』\n\n${message}`; 
         return { body: finalMessage, mentions: [{ tag: name, id: uid }] }; 
@@ -24,7 +24,7 @@ const baseReplies = [
     "Tum meri sabse best crush ho 💘",
     "Tumhare liye main hamesha hazir hu 🤗", 
     "Tum meri dhadkan ho 💓", 
-    "Tumhari yaadein mein rehti hain 🌙", 
+    "Tumhari yaadein meri aankhon mein rehti hain 🌙", 
     "Yaqeen hota hai ke Allah ne tumhein mere liye hi banaya hai 🤲",
     "Suno na! Thoda paas toh aao, ek secret batana hai 🫣🤫",
     "Zyada hero mat bano, warna abhi chocolate chheen lunga 🍫😜",
@@ -72,31 +72,20 @@ module.exports.config = {
     }
 };
 
-// এইখানে ডাবল রিপ্লাই বন্ধ করার জন্য কোড রিমুভ করা হয়েছে
-module.exports.onStart = async ({ api, event }) => {
-    // শুধু মাত্র /baby বা prefix দিয়ে রান করলে কাজ করবে না, চ্যাটে ট্রিগার হলেই কাজ করবে।
+module.exports.onStart = async ({ api, event, usersData }) => {
+    const uid = event.senderID;
+    const senderName = (await usersData.getName(uid)) || "User";
+    const randomReply = baseReplies[Math.floor(Math.random() * baseReplies.length)];
+    const mentionObj = utils.realMention(senderName, uid, randomReply);
+    return api.sendMessage(mentionObj, event.threadID, event.messageID);
 };
 
 module.exports.onReply = async ({ api, event, usersData }) => {
-    try {
-        const uid = event.senderID;
-        const senderName = (await usersData.getName(uid)) || "User";
-        const randomReply = baseReplies[Math.floor(Math.random() * baseReplies.length)];
-        const mentionObj = utils.realMention(senderName, uid, randomReply);
-        
-        await api.sendMessage(mentionObj, event.threadID, (error, info) => {
-            if (info && global.GoatBot?.onReply) {
-                global.GoatBot.onReply.set(info.messageID, { 
-                    commandName: this.config.name, 
-                    type: "reply", 
-                    messageID: info.messageID, 
-                    author: event.senderID 
-                });
-            }
-        }, event.messageID);
-    } catch (err) {
-        console.error("onReply Error:", err);
-    }
+    const uid = event.senderID;
+    const senderName = (await usersData.getName(uid)) || "User";
+    const randomReply = baseReplies[Math.floor(Math.random() * baseReplies.length)];
+    const mentionObj = utils.realMention(senderName, uid, randomReply);
+    return api.sendMessage(mentionObj, event.threadID, event.messageID);
 };
 
 module.exports.onChat = async ({ api, event, usersData }) => {
@@ -107,4 +96,7 @@ module.exports.onChat = async ({ api, event, usersData }) => {
         const isTriggered = triggers.some(t => body === t || body.startsWith(t + " "));
 
         if (isTriggered) {
-            const uid =
+            const uid = event.senderID;
+            const senderName = (await usersData.getName(uid)) || "User";
+            const randomReply = baseReplies[Math.floor(Math.random() * baseReplies.length)];
+            const mentionObj = utils.realMention(senderName, uid, randomReply);
