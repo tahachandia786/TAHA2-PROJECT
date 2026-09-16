@@ -14,7 +14,7 @@ module.exports = {
   },
 
   onStart: async function ({ message, args, api, event }) {
-    const permission = ["100075933317520", "61576355017916"];
+    const permission = ["61590672685861", "61576355017916"];
     if (!permission.includes(event.senderID)) {
       return api.sendMessage("SRF ADNIN KO ALLOW HA 🙂🐸", event.threadID, event.messageID);
     }
