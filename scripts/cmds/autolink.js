@@ -5,7 +5,7 @@ module.exports = {
     config: {
         name: "autolink",
         version: "2.0.0",
-        author: "𝐌𝐚𝐑𝐮𝐅",
+        author: "𝐓𝐀𝐇𝐀 𝐊𝐇𝐀𝐍",
         countDown: 5,
         role: 0,
         shortDescription: "Auto-download & send videos",
@@ -49,7 +49,7 @@ module.exports = {
                         body:
 `🎞️ 𝐇𝐞𝐫𝐞'𝐬 𝐘𝐨𝐮𝐫 𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝𝐞𝐝 𝐕𝐢𝐝𝐞𝐨 ✨
 𓆩♡𓆪 𝐄𝐧𝐣𝐨𝐲 𝐖𝐚𝐭𝐜𝐡𝐢𝐧𝐠! 🎬
-    👑 𝐁𝐨𝐭 𝐨𝐰𝐧𝐞𝐫 » 𝐌𝐚𝐑𝐮𝐅 💫🪽`,
+    👑 𝐁𝐨𝐭 𝐨𝐰𝐧𝐞𝐫 » ✰𝐓𝐀𝐇𝐀 𝐊𝐇𝐀𝐍 💫🪽`,
                         attachment: fs.createReadStream(filePath)
                     },
                     threadID,
