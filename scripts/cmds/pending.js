@@ -55,8 +55,8 @@ onReply: async function({ api, event, Reply, getLang, commandName, prefix }) {
 ╰──────────────⭓
 ╭──────────────⭓
 │➜ 𝐎𝐭𝐡𝐞𝐫 𝐃𝐞𝐭𝐚𝐢𝐥𝐬 🦋🪶
-│Owner : Siam Ahmed Saan 
-│FB : https://www.facebook.com/siam.ahmed.491801
+│Owner : TAHA KHAN ^°BOT OWNER
+│FB : https://www.facebook.com/61590672685861
 ╰──────────────⭓`, Reply.pending[ArYanIndex - 1].threadID);
             count+=1;
         }
