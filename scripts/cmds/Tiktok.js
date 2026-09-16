@@ -40,7 +40,7 @@ module.exports = {
       api.setMessageReaction("✅", event.messageID, () => {}, true);
       
       const sentMsg = await message.reply({
-        body: `╭━━━━━━━━━━━━╮
+        body: `╭━━━━━━TAHA━━━━━━╮
 🎵 𝑻𝒊𝒌𝑻𝒐𝒌 𝑺𝒆𝒂𝒓𝒄𝒉
 ╰━━━━━━━━━━━━╯
 🔍 𝗞𝗲𝘆𝘄𝗼𝗿𝗱: ${keyword}
