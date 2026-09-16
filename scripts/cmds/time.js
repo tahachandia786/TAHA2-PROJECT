@@ -6,7 +6,7 @@ module.exports = {
   config: {
     name: "time",
     version: "0.0.7",
-    author: "Siam Ahmed Saan",
+    author: "TAHA KHAN",
     role: 0,
     shortDescription: "Show current time",
     longDescription: "Generates image with current time and date",
@@ -17,7 +17,7 @@ module.exports = {
   onStart: async function ({ message, event, api }) {
     try {
       const now = new Date();
-      const bangladeshTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }));
+      const bangladeshTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Karachi' }));
       
       const timeString = bangladeshTime.toLocaleTimeString("en-US", {
         hour: "2-digit",
@@ -77,7 +77,7 @@ module.exports = {
       
       ctx.font = "40px Arial";
       ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-      ctx.fillText("BANGLADESH TIME", 960, 280);
+      ctx.fillText("PAKISTAN TIME", 960, 280);
       
       ctx.font = "bold 200px Arial";
       ctx.fillStyle = "#ffffff";
@@ -100,7 +100,7 @@ module.exports = {
       
       ctx.font = "35px Arial";
       ctx.fillStyle = "#98FB98";
-      ctx.fillText("Dhaka, Bangladesh", 960, 780);
+      ctx.fillText("Karachi, Pakistan", 960, 780);
       
       ctx.font = "30px Arial";
       ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
