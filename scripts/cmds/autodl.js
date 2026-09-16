@@ -38,7 +38,7 @@ module.exports = {
   config: {
     name: "autodl",
     version: "6.5",
-    author: "Siam Ahmed Saan",
+    author: "TAHA KHAN",
     role: 0,
     category: "media",
     description: { en: "Auto download videos from multiple platforms" },
@@ -84,7 +84,7 @@ module.exports = {
       const speed = ((Date.now() - startTime) / 1000).toFixed(2);
 
       const msg = {
-        body: `╭━〔 ✅ 𝐀𝐮𝐭𝐨 𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝 〕━╮\n┃ 📌 Title     : ${info.title || "No Title"}\n┃ 🌐 Platform  : ${platform}\n┃ 👤 Author    : ${info.author || "Unknown"}\n┃ ⚡ Speed     : ${speed}s\n╰━━━━━━━━━━━━━━━━╯\n⚡ Powered by Siam Ahmed Saan`,
+        body: `╭━〔 ✅ 𝐀𝐮𝐭𝐨 𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝 〕━╮\n┃ 📌 Title     : ${info.title || "No Title"}\n┃ 🌐 Platform  : ${platform}\n┃ 👤 Author    : ${info.author || "Unknown"}\n┃ ⚡ Speed     : ${speed}s\n╰━━━━━━━━━━━━━━━━╯\n⚡ Powered by TAHA KHAN`,
         attachment: fs.createReadStream(filePath)
       };
 
