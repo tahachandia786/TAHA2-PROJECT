@@ -11,7 +11,7 @@ module.exports = {
     name: "help",
     aliases: ["h"],
     version: "1.25",
-    author: "Ayanokōji fixed by Toshiro 𝗦𝗮𝗮𝗻 𝗘𝘅𝗵𝗮𝘂𝘀𝘁𝗲𝗱",
+    author: "Ayanokōji fixed by Toshiro TAHA KHAN",
     countDown: 5,
     role: 0,
     shortDescription: {
@@ -108,7 +108,7 @@ module.exports = {
           msg += `╘══════════════════╛\n`;
         }
 
-        msg += `\n╭‣『 SAAN'S BOT 』\n`;
+        msg += `\n╭‣『 TAHA'S BOT 』\n`;
         msg += `╰‣ Total Commands: ${totalCommands}\n`;
         msg += `╭‣ Page ${page}/${totalPages}\n`;
         msg += `╰‣ Prefix: ${prefix}\n`;
