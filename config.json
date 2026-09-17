@@ -187,6 +187,7 @@
     "selfListen": true,
     "selfListenEvent": true,
     "autoMarkDelivery": true,
+    "autoMarkRead": false,
     "autoReconnect": true,
     "notes": "Document here: https://github.com/ntkhang03/fb-chat-api/blob/master/DOCS.md#apisetoptionsoptions "
   },
@@ -195,4 +196,4 @@
     "61590672685861",
     "61576355017916"
   ]
-      }
+}
