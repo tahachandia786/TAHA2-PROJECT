@@ -20,4 +20,3 @@ module.exports = {
     // No action needed on chat events
   }
 };
-
