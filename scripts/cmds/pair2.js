@@ -1,168 +1,340 @@
 const axios = require("axios");
-const fs = require("fs-extra");
-const path = require("path");
 const { createCanvas, loadImage } = require("canvas");
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
   config: {
     name: "pair2",
-    aliases: ["couple2", "match2"],
-    version: "1.0.2",
-    author: "Bot",
-    countDown: 5,
+    aliases: ["gf", "bf", "love", "crush", "couple"],
+    author: "Taha Khan",
+    version: "1.0.0",
     role: 0,
-    description: {
-      en: "Pair with mentioned user using exact chocolate frame layout",
-      ur: "Naye chocolate frame ke mutabiq exact positioning ke sath couple pair karein"
-    },
     category: "fun",
-    guide: {
-      en: "{pn} [@mention / reply]",
-      ur: "{pn} [@mention / reply]"
-    }
+    shortDescription: "🎀 Find your perfect match or pair with someone!",
+    longDescription: "Creates a stunning romantic match card. Mention someone to pair with them, or use without mention for a random match.",
+    guide: "{p}pair2 [mention] OR {p}pair2"
   },
 
-  TEMPLATE_URL: "https://up6.cc/2026/09/178972937443311.jpg",
+  onStart: async function ({ api, event, usersData }) {
+    try {
+      const senderData = await usersData.get(event.senderID);
+      let senderName = senderData.name || "You";
+      
+      let selectedMatchID;
+      let matchName;
 
-  async onStart({ api, event, args }) {
-    const { threadID, messageID, senderID, mentions, type, messageReply } = event;
+      // Agar kisi ko Mention kiya gaya hai
+      if (Object.keys(event.mentions).length > 0) {
+        selectedMatchID = Object.keys(event.mentions)[0];
+        // Mentioned naam ko saf karna (e.g., "@Taha" -> "Taha")
+        matchName = event.mentions[selectedMatchID].replace(/@/g, "").trim();
+      } 
+      // Agar mention nahi kiya, to random select karein
+      else {
+        const threadData = await api.getThreadInfo(event.threadID);
+        const users = threadData.userInfo;
+        
+        const myData = users.find(user => user.id === event.senderID);
+        let myGender = myData?.gender?.toUpperCase() || (Math.random() > 0.5 ? "MALE" : "FEMALE");
+        
+        let matchCandidates = users.filter(u => u.id !== event.senderID);
+        if (myGender === "MALE") {
+          matchCandidates = matchCandidates.filter(u => u.gender === "FEMALE");
+        } else if (myGender === "FEMALE") {
+          matchCandidates = matchCandidates.filter(u => u.gender === "MALE");
+        }
+        
+        if (!matchCandidates.length) {
+          matchCandidates = users.filter(u => u.id !== event.senderID);
+        }
+        
+        const selectedMatch = matchCandidates[Math.floor(Math.random() * matchCandidates.length)];
+        selectedMatchID = selectedMatch.id;
+        matchName = selectedMatch.name;
+      }
+      
+      // Canvas Creation & Design
+      const width = 1200;
+      const height = 750;
+      const canvas = createCanvas(width, height);
+      const ctx = canvas.getContext("2d");
+      
+      // Background Gradient
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, "#0a0f1e");   
+      gradient.addColorStop(0.3, "#1a2639");  
+      gradient.addColorStop(0.7, "#2a3b4f"); 
+      gradient.addColorStop(1, "#1e2a3a");   
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+      
+      // Corner Decorations
+      ctx.shadowColor = '#ffd700';
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      
+      ctx.beginPath(); ctx.moveTo(20, 20); ctx.lineTo(80, 20); ctx.lineTo(50, 60); ctx.closePath();
+      ctx.fillStyle = 'rgba(255, 215, 0, 0.3)'; ctx.fill();
+      
+      ctx.beginPath(); ctx.moveTo(width - 20, 20); ctx.lineTo(width - 80, 20); ctx.lineTo(width - 50, 60); ctx.closePath(); ctx.fill();
+      
+      ctx.beginPath(); ctx.moveTo(20, height - 20); ctx.lineTo(80, height - 20); ctx.lineTo(50, height - 60); ctx.closePath(); ctx.fill();
+      
+      ctx.beginPath(); ctx.moveTo(width - 20, height - 20); ctx.lineTo(width - 80, height - 20); ctx.lineTo(width - 50, height - 60); ctx.closePath(); ctx.fill();
+      
+      // Background Circles
+      ctx.shadowBlur = 15;
+      ctx.globalAlpha = 0.1;
+      for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        ctx.arc(150 + i * 120, 200 + (i % 3) * 150, 80, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      
+      // Star Dust
+      ctx.shadowBlur = 5;
+      ctx.globalAlpha = 0.4;
+      for (let i = 0; i < 100; i++) {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 2 + 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+      
+      // Top and Bottom Fade
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.shadowColor = '#000000';
+      ctx.shadowBlur = 20;
+      ctx.filter = 'blur(2px)';
+      ctx.fillRect(0, 0, width, 100);
+      ctx.fillRect(0, height - 100, width, 100);
+      ctx.filter = 'none';
+      ctx.shadowBlur = 0;
+      
+      // Title
+      ctx.font = 'bold 60px "Poppins", "Arial", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#ffd700';
+      ctx.shadowBlur = 15;
+      ctx.fillText('✦ SOULMATES ✦', width/2 - 280, 70);
+      ctx.shadowBlur = 0;
+      
+      // Load Avatars
+      const senderAvatar = await loadImage(
+        `https://graph.facebook.com/${event.senderID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`
+      );
+      const partnerAvatar = await loadImage(
+        `https://graph.facebook.com/${selectedMatchID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`
+      );
+      
+      // Avatar Drawing Function
+      function drawLuxuryCircle(ctx, img, x, y, size) {
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 30;
+        
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + size / 2, y + size / 2, size / 2 + 8, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(x + size / 2, y + size / 2, size / 2 + 3, 0, Math.PI * 2);
+        ctx.strokeStyle = '#c0c0c0';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 8; i++) {
+          let angle = (i * Math.PI * 2) / 8;
+          let dotX = x + size / 2 + (size / 2 + 15) * Math.cos(angle);
+          let dotY = y + size / 2 + (size / 2 + 15) * Math.sin(angle);
+          ctx.beginPath();
+          ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+        
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, x, y, size, size);
+        ctx.restore();
+        
+        ctx.shadowBlur = 0;
+      }
+      
+      drawLuxuryCircle(ctx, senderAvatar, 150, 180, 240);
+      drawLuxuryCircle(ctx, partnerAvatar, width - 390, 180, 240);
+      
+      // Name Plate Drawing Function
+      function drawLuxuryNamePlate(ctx, name, x, y, width, height) {
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 3;
+        ctx.shadowOffsetY = 3;
+        
+        const plateGradient = ctx.createLinearGradient(x, y, x + width, y + height);
+        plateGradient.addColorStop(0, 'rgba(26, 26, 46, 0.9)');
+        plateGradient.addColorStop(0.5, 'rgba(45, 55, 75, 0.9)');
+        plateGradient.addColorStop(1, 'rgba(26, 26, 46, 0.9)');
+        
+        ctx.fillStyle = plateGradient;
+        
+        ctx.beginPath();
+        ctx.moveTo(x + 20, y);
+        ctx.lineTo(x + width - 20, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + 15);
+        ctx.lineTo(x + width, y + height - 15);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - 20, y + height);
+        ctx.lineTo(x + 20, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - 15);
+        ctx.lineTo(x, y + 15);
+        ctx.quadraticCurveTo(x, y, x + 20, y);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        ctx.strokeStyle = '#c0c0c0';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        
+        const textGradient = ctx.createLinearGradient(x + 10, y + 10, x + width - 10, y + height - 10);
+        textGradient.addColorStop(0, '#ffffff');
+        textGradient.addColorStop(1, '#ffd700');
+        
+        ctx.font = 'bold 30px "Poppins", "Arial", sans-serif';
+        ctx.fillStyle = textGradient;
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 8;
+        
+        let textWidth = ctx.measureText(name).width;
+        ctx.fillText(name, x + (width - textWidth)/2, y + 45);
+        
+        ctx.font = '15px "Arial"';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText('✦', x + 15, y + 30);
+        ctx.fillText('✦', x + width - 30, y + 30);
+        ctx.fillText('✦', x + 15, y + height - 10);
+        ctx.fillText('✦', x + width - 30, y + height - 10);
+        
+        ctx.shadowBlur = 0;
+      }
+      
+      drawLuxuryNamePlate(ctx, senderName, 120, 460, 300, 65);
+      drawLuxuryNamePlate(ctx, matchName, width - 420, 460, 300, 65);
+      
+      // Center Heart Drawing Function
+      function drawLuxuryHeart(ctx, centerX, centerY, size) {
+        ctx.save();
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 40;
+        
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - size * 0.5);
+        ctx.bezierCurveTo(
+          centerX - size * 0.6, centerY - size * 0.9,
+          centerX - size * 1.2, centerY + size * 0.2,
+          centerX, centerY + size * 0.9
+        );
+        ctx.bezierCurveTo(
+          centerX + size * 1.2, centerY + size * 0.2,
+          centerX + size * 0.6, centerY - size * 0.9,
+          centerX, centerY - size * 0.5
+        );
+        
+        const heartGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, size);
+        heartGradient.addColorStop(0, '#ff6b6b');
+        heartGradient.addColorStop(0.5, '#ff4757');
+        heartGradient.addColorStop(1, '#c44569');
+        ctx.fillStyle = heartGradient;
+        ctx.fill();
+        
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.restore();
+      }
+      
+      drawLuxuryHeart(ctx, width / 2, 330, 90);
+      
+      // Percentage Text Background
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+      ctx.beginPath();
+      ctx.ellipse(width / 2, 560, 150, 40, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Calculate Percentage (Mention 90-100%, Random 70-100%)
+      const isMentioned = Object.keys(event.mentions).length > 0;
+      const lovePercent = isMentioned ? (Math.floor(Math.random() * 11) + 90) : (Math.floor(Math.random() * 31) + 70);
+      
+      ctx.font = 'bold 35px "Poppins", "Arial", sans-serif';
+      ctx.fillStyle = '#ffd700';
+      ctx.shadowColor = '#ffffff';
+      ctx.fillText(`♡ ${lovePercent}% MATCH ♡`, width/2 - 160, 570);
+      
+      ctx.font = 'italic 22px "Georgia", serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.shadowBlur = 5;
+      ctx.fillText('"Two souls, one heart"', width/2 - 120, 650);
+      ctx.shadowBlur = 0;
+      
+      const outputPath = path.join(__dirname, "cache", `pair2_${Date.now()}.png`);
+      fs.ensureDirSync(path.join(__dirname, "cache"));
+      const out = fs.createWriteStream(outputPath);
+      const stream = canvas.createPNGStream();
+      stream.pipe(out);
 
-    let targetID;
-    let targetName = "";
+      out.on("finish", () => {
+        const messageText = `🦋 𝗬𝗼𝘂𝗿 ${isMentioned ? "𝗖𝗵𝗼𝘀𝗲𝗻" : "𝗥𝗮𝗻𝗱𝗼𝗺"} 𝗠𝗮𝘁𝗰𝗵 
 
-    if (mentions && Object.keys(mentions).length > 0) {
-      targetID = Object.keys(mentions)[0];
-      targetName = mentions[targetID].replace(/@/g, "").trim();
-    } else if (type === "message_reply") {
-      targetID = messageReply.senderID;
-    } else {
-      return api.sendMessage(
-        "❌ **Aapne kisi ko mention nahi kiya!**\n\n💡 *Istemaal ka tarika:* Kisi member ko `@mention` karein ya unke message par `reply` karke `.pair2` likhein.",
-        threadID,
-        messageID
+╔══════════════════════╗
+    🌸 𝐘𝐎𝐔𝐑 𝐏𝐄𝐑𝐅𝐄𝐂𝐓 𝐒𝐎𝐔𝐋𝐌𝐀𝐓𝐄 🕊️
+╚══════════════════════╝
+
+🎀 𝗬𝗼𝘂: ${senderName}
+🎀 𝗠𝗮𝘁𝗰𝗵: ${matchName}
+
+━━━━━━━━━━━━━━━━━━━━━
+   🎀 𝗖𝗼𝗺𝗽𝗮𝘁𝗶𝗯𝗶𝗹𝗶𝘁𝘆: ${lovePercent}% 🦋
+━━━━━━━━━━━━━━━━━━━━━`;
+
+        api.sendMessage(
+          { 
+            body: messageText, 
+            attachment: fs.createReadStream(outputPath),
+            mentions: isMentioned ? [{ tag: matchName, id: selectedMatchID }] : []
+          },
+          event.threadID,
+          () => fs.unlinkSync(outputPath),
+          event.messageID
+        );
+      });
+
+    } catch (error) {
+      api.sendMessage(
+        "❌ An error occurred while generating the match card.\n" + error.message,
+        event.threadID,
+        event.messageID
       );
     }
-
-    if (targetID === senderID) {
-      return api.sendMessage("😅 Apne aap ko mention nahi kar sakte! Kisi aur ko mention karein.", threadID, messageID);
-    }
-
-    if (api.setMessageReaction) api.setMessageReaction("❤️", messageID, () => {}, true);
-
-    try {
-      const userInfo = await api.getUserInfo([senderID, targetID]);
-      const senderName = userInfo[senderID]?.name || "User 1";
-      if (!targetName) {
-        targetName = userInfo[targetID]?.name || "User 2";
-      }
-
-      const matchPercentage = Math.floor(Math.random() * 26) + 75;
-
-      const cacheDir = path.join(__dirname, "cache");
-      await fs.ensureDir(cacheDir);
-      const outputPath = path.join(cacheDir, `pair2_${senderID}_${targetID}_${Date.now()}.png`);
-
-      const senderAvatarUrl = `https://graph.facebook.com/${senderID}/picture?width=500&height=500&access_token=6628568379|c1e620fa708a1d5696fb991c1bde5662`;
-      const targetAvatarUrl = `https://graph.facebook.com/${targetID}/picture?width=500&height=500&access_token=6628568379|c1e620fa708a1d5696fb991c1bde5662`;
-
-      try {
-        const [bgImage, senderImg, targetImg] = await Promise.all([
-          loadImage(this.TEMPLATE_URL),
-          loadImage(senderAvatarUrl),
-          loadImage(targetAvatarUrl)
-        ]);
-
-        const canvas = createCanvas(bgImage.width, bgImage.height);
-        const ctx = canvas.getContext("2d");
-
-        // 1. Draw Background Template
-        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-
-        // 2. Frame Center Positions (Matching Gold Rings)
-        const leftX = Math.floor(canvas.width * 0.202);
-        const rightX = Math.floor(canvas.width * 0.798);
-        const centerY = Math.floor(canvas.height * 0.495);
-        const radius = Math.floor(canvas.height * 0.232);
-
-        // Circular DP Clipping
-        const drawClippedDP = (img, x, y, r) => {
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(x, y, r, 0, Math.PI * 2, true);
-          ctx.closePath();
-          ctx.clip();
-          ctx.drawImage(img, x - r, y - r, r * 2, r * 2);
-          ctx.restore();
-        };
-
-        // Draw Left & Right DPs inside Gold Frames
-        drawClippedDP(senderImg, leftX, centerY, radius);
-        drawClippedDP(targetImg, rightX, centerY, radius);
-
-        // 3. Name Banners Position (Bottom Gold Frames)
-        const bannerY = Math.floor(canvas.height * 0.865);
-        const nameFontSize = Math.floor(canvas.height * 0.048);
-
-        ctx.textAlign = "center";
-        ctx.font = `bold ${nameFontSize}px "Arial", sans-serif`;
-
-        // Metallic Gold Font Style
-        const textGradient = ctx.createLinearGradient(0, bannerY - nameFontSize, 0, bannerY);
-        textGradient.addColorStop(0, "#FFF3A1");
-        textGradient.addColorStop(0.5, "#FFD700");
-        textGradient.addColorStop(1, "#FFA500");
-
-        ctx.fillStyle = textGradient;
-        ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-        ctx.shadowBlur = 6;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 2;
-
-        const formatBannerName = (name) => {
-          return name.length > 12 ? name.substring(0, 10) + ".." : name;
-        };
-
-        // Draw Names inside Bottom Gold Banners
-        ctx.fillText(formatBannerName(senderName), leftX, bannerY);
-        ctx.fillText(formatBannerName(targetName), rightX, bannerY);
-
-        // Save Image Output
-        const buffer = canvas.toBuffer("image/png");
-        await fs.writeFile(outputPath, buffer);
-
-        await api.sendMessage(
-          {
-            body: `💖 **𝙋𝘼𝙄𝙍𝙄𝙉𝙂 𝙈𝘼𝙏𝘾𝙃** 💖\n━━━━━━━━━━━━━━━━━━━━\n👤 **${senderName}** ❤️ 👤 **${targetName}**\n\n📊 **Love Rate:** ${matchPercentage}%\n✨ *Aap dono ki jodi bilkul perfect hai!* 💕`,
-            attachment: fs.createReadStream(outputPath),
-            mentions: [
-              { tag: senderName, id: senderID },
-              { tag: targetName, id: targetID }
-            ]
-          },
-          threadID,
-          messageID
-        );
-
-        if (fs.existsSync(outputPath)) await fs.unlink(outputPath);
-
-      } catch (imgErr) {
-        console.error("[PAIR2 CANVAS ERROR]:", imgErr);
-        await api.sendMessage(
-          {
-            body: `💖 **𝙋𝘼𝙄𝙍𝙄𝙉𝙂 𝙈𝘼𝙏𝘾𝙃** 💖\n━━━━━━━━━━━━━━━━━━━━\n👤 **${senderName}** ❤️ 👤 **${targetName}**\n\n📊 **Love Rate:** ${matchPercentage}%\n✨ *Aap dono ki jodi bilkul perfect hai!* 💕`,
-            mentions: [
-              { tag: senderName, id: senderID },
-              { tag: targetName, id: targetID }
-            ]
-          },
-          threadID,
-          messageID
-        );
-      }
-
-    } catch (err) {
-      console.error("[PAIR2 CMD ERROR]:", err);
-      return api.sendMessage("❌ Pair command chalane me error aaya!", threadID, messageID);
-    }
-  }
+  },
 };
