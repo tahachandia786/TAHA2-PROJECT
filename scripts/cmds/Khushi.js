@@ -158,7 +158,7 @@ module.exports = {
 
   AUDIO_API: "https://uzairrajputapis.qzz.io/api/downloader/ytmp3",
   VIDEO_API: "https://uzairrajputapis.qzz.io/api/downloader/youtube",
-  YT_SEARCH: "https://xalman-apis.vercel.app/api/ytsearch?q=",
+  YT_SEARCH: "https://uzairrajputapis.qzz.io/api/search/youtube",
   AI_API: "https://uzairrajputapis.qzz.io/api/ai/gemini",
   MAX_FILE_SIZE: 25 * 1024 * 1024,
   OWNER_TAG: "»»𝐎𝐖𝐍𝐄𝐑««★™  »»𝐓𝐀𝐇𝐀 𝐊𝐇𝐀𝐍««",
@@ -394,7 +394,7 @@ Dewani:`;
     // 2. RULE 2: Agar sirf Trigger Word bol kar bulaya hai ("bot", "khushi", "baby") -> Base Reply + Mention
     if (!cleanedMsg) {
       if (api.setMessageReaction) {
-        api.setMessageReaction("😂", event.messageID, () => {}, true);
+        api.setMessageReaction("😘", event.messageID, () => {}, true);
       }
       const randomReply = baseReplies[Math.floor(Math.random() * baseReplies.length)];
       const mentionObj = this.realMention(senderName, uid, randomReply);
