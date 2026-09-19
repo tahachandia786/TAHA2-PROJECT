@@ -24,10 +24,10 @@ module.exports = {
       let selectedMatchID;
       let matchName;
 
-      // Agar kisi ko Mention kiya gaya hai
-      if (Object.keys(event.mentions).length > 0) {
+      // Agar kisi ko Mention kiya gaya hai (Null check added)
+      if (event.mentions && Object.keys(event.mentions).length > 0) {
         selectedMatchID = Object.keys(event.mentions)[0];
-        // Mentioned naam ko saf karna (e.g., "@Taha" -> "Taha")
+        // Mentioned naam ko saf karna
         matchName = event.mentions[selectedMatchID].replace(/@/g, "").trim();
       } 
       // Agar mention nahi kiya, to random select karein
@@ -51,7 +51,7 @@ module.exports = {
         
         const selectedMatch = matchCandidates[Math.floor(Math.random() * matchCandidates.length)];
         selectedMatchID = selectedMatch.id;
-        matchName = selectedMatch.name;
+        matchName = selectedMatch.name || "Unknown";
       }
       
       // Canvas Creation & Design
@@ -126,13 +126,15 @@ module.exports = {
       ctx.fillText('✦ SOULMATES ✦', width/2 - 280, 70);
       ctx.shadowBlur = 0;
       
-      // Load Avatars
-      const senderAvatar = await loadImage(
-        `https://graph.facebook.com/${event.senderID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`
-      );
-      const partnerAvatar = await loadImage(
-        `https://graph.facebook.com/${selectedMatchID}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`
-      );
+      // Safely Load Avatars using Axios Buffer to avoid redirect issues
+      const fetchAvatar = async (id) => {
+        const url = `https://graph.facebook.com/${id}/picture?width=720&height=720&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        return await loadImage(Buffer.from(response.data));
+      };
+
+      const senderAvatar = await fetchAvatar(event.senderID);
+      const partnerAvatar = await fetchAvatar(selectedMatchID);
       
       // Avatar Drawing Function
       function drawLuxuryCircle(ctx, img, x, y, size) {
@@ -283,7 +285,7 @@ module.exports = {
       ctx.fill();
       
       // Calculate Percentage (Mention 90-100%, Random 70-100%)
-      const isMentioned = Object.keys(event.mentions).length > 0;
+      const isMentioned = event.mentions && Object.keys(event.mentions).length > 0;
       const lovePercent = isMentioned ? (Math.floor(Math.random() * 11) + 90) : (Math.floor(Math.random() * 31) + 70);
       
       ctx.font = 'bold 35px "Poppins", "Arial", sans-serif';
@@ -297,8 +299,13 @@ module.exports = {
       ctx.fillText('"Two souls, one heart"', width/2 - 120, 650);
       ctx.shadowBlur = 0;
       
-      const outputPath = path.join(__dirname, "cache", `pair2_${Date.now()}.png`);
-      fs.ensureDirSync(path.join(__dirname, "cache"));
+      // Fixed the directory issue here (Standard Node.js fs implementation)
+      const cacheDir = path.join(__dirname, "cache");
+      if (!fs.existsSync(cacheDir)) {
+        fs.mkdirSync(cacheDir, { recursive: true });
+      }
+      
+      const outputPath = path.join(cacheDir, `pair2_${Date.now()}.png`);
       const out = fs.createWriteStream(outputPath);
       const stream = canvas.createPNGStream();
       stream.pipe(out);
@@ -330,6 +337,7 @@ module.exports = {
       });
 
     } catch (error) {
+      console.log(error); // Logs to terminal to help debug future issues
       api.sendMessage(
         "❌ An error occurred while generating the match card.\n" + error.message,
         event.threadID,
