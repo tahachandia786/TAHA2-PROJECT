@@ -5,7 +5,7 @@ module.exports = {
     name: "imgur",
     version: "1.0.5",
     role: 0,
-    author: "DUR4NTO | Azadx69x",
+    author: "TAHA KHAN",
     countDown: 0,
     category: "imgur",
     guide: {
@@ -38,7 +38,7 @@ module.exports = {
     }
 
     try {
-      const endpoint = `https://azadx69x-all-apis-top.vercel.app/api/imgur?url=${encodeURIComponent(mediaUrl)}`;
+      const endpoint = `https://uzairrajputapis.qzz.io/docs?endpoint=${encodeURIComponent(mediaUrl)}`;
       const res = await axios.get(endpoint, { timeout: 20000 });
       const data = res.data;
 
