@@ -7,7 +7,7 @@ module.exports = {
   config: {
     name: "pair2",
     aliases: ["gf", "bf", "love", "crush", "couple"],
-    author: "Taha Khan",
+    author: "Siam Ahmed Saan & Taha Khan",
     version: "1.0.0",
     role: 0,
     category: "fun",
