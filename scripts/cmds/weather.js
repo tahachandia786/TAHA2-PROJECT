@@ -6,7 +6,7 @@ module.exports = {
   config: {
     name: "weather",
     version: "1.7",
-    author: "Siam Ahmed Saan",
+    author: "TAHA KHAN",
     description: "Get current weather info with BD time, sunrise and sunset",
     usage: ".weather [city]",
     category: "utility",        // <-- category fixed
@@ -15,7 +15,7 @@ module.exports = {
 
   onStart: async function ({ api, event, args }) {
     const city = args.join(" ");
-    if (!city) return api.sendMessage("Please enter a city name.\nExample: .weather Dhaka", event.threadID);
+    if (!city) return api.sendMessage("Please enter a city name.\nExample: .weather Karachi", event.threadID);
 
     const apiKey = "a2ef576aedf483dbe1599216e3e146c0";
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
@@ -26,18 +26,18 @@ module.exports = {
 
       const toBDTime = (unix) =>
         new Date(unix * 1000).toLocaleTimeString("en-US", {
-          timeZone: "Asia/Dhaka",
+          timeZone: "Asia/Karachi",
           hour: "2-digit",
           minute: "2-digit",
           hour12: true
         });
 
       const updateTime = new Date(data.dt * 1000).toLocaleString("en-US", {
-        timeZone: "Asia/Dhaka"
+        timeZone: "Asia/Karachi"
       });
 
       const currentTime = new Date().toLocaleString("en-US", {
-        timeZone: "Asia/Dhaka"
+        timeZone: "Asia/Karachi"
       });
 
       const sunriseTime = toBDTime(data.sys.sunrise);
