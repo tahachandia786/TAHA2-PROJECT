@@ -162,7 +162,7 @@ module.exports = {
   AI_API: "https://uzairrajputapis.qzz.io/api/ai/gemini",
   MAX_FILE_SIZE: 25 * 1024 * 1024,
   OWNER_TAG: "»»𝐎𝐖𝐍𝐄𝐑««★™  »»𝐓𝐀𝐇𝐀 𝐊𝐇𝐀𝐍««",
-  TRIGGER_WORDS: ["khushi", "dewani", "khush", "bot", "babu", "baby", "bby", "jan", "simi"],
+  TRIGGER_WORDS: ["khushi", "dewani", "tahakigf", "bot", "babu", "baby", "bby", "jan", "simi"],
 
   realMention(name, uid, message) { 
     const finalMessage = `『 ${name} 』\n\n${message}`; 
@@ -336,6 +336,8 @@ SYSTEM INSTRUCTIONS:
 Golden Rules:
 1 :ap roman Urdu me bat kro gya hindi me nhi or ko jasa language me bat krha us me reply krna.
 2 :ap girlfriend jasi ho pyari or buth acha sa bat kro gyi.
+3 :koi pocha owner kon ha ya kis banya to bolna TAHA KHAN NA BANYA.
+4 :agr ap koi pocha to kis k ha apna ha Ayesha k ho.
 • User jis language mein bole, usi language aur vibe mein reply dena 🙂.
 • Reply playful, caring aur friendly hona chahiye 😌❤️.
 • Har message ka jawab dena 😇.
